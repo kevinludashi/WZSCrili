@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日历应用</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+			align-items: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+			overflow-y: auto; /* 确保页面能滚动 */
+            margin-top: 120px;
+			margin-bottom: 100px;
+        }
+		
+		/* 父容器，确保内部内容垂直居中 */
+		#content-container {
+		    background-color: white;
+		        padding: 20px;
+		        border-radius: 10px;
+		        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		        width: 95vw; /* 宽度占屏幕 95% */
+		        height: auto; /* 高度自适应 */
+		        max-height: none; /* 不限制高度 */
+		        overflow: auto; /* 超出内容显示滚动条 */
+		        margin-bottom: 20px;
+		}
+
+       #calendar-container {
+           background-color: white;
+           padding: 20px;
+           border-radius: 10px;
+           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+           width: 95vw; /* 宽度占屏幕 95% */
+           height: auto; /* 高度自适应 */
+           max-height: calc(100vh - 40px); /* 高度最大为屏幕高度减去 40px（上下边距） */
+           overflow: auto; /* 超出内容显示滚动条 */
+           margin-bottom: 20px; /* 保持底部有 20px 间距 */
+           box-sizing: border-box; /* 包含边距和内边距 */
+       }
+
+       @media (max-width: 767px) {
+           #calendar-container {
+               width: 95vw; /* 保持宽度为屏幕的 95% */
+               margin-bottom: 20px; /* 保持底部间距 */
+           }
+       }
+       
+       @media (max-width: 500px) {
+           #calendar-container {
+               width: 95vw; /* 保持宽度为屏幕的 95% */
+               margin-bottom: 20px; /* 保持底部间距 */
+           }
+       }
+
+        #calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #calendar-header select {
+            padding: 5px;
+        }
+
+        #calendar-header button {
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #calendar-header .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+
+        #calendar-header .settings-btn {
+            margin-left: 10px;
+        }
+
+
+
+       #calendar {
+           display: grid;
+           grid-template-columns: repeat(7, minmax(100px, 1fr)); /* 每列宽度最小100px，最大占用剩余空间 */
+           gap: 1px;
+           margin-top: 10px;
+           grid-auto-rows: minmax(50px, auto); /* 自适应行高，最小50px，最大内容自适应 */
+           width: 100%; /* 日历宽度自适应容器 */
+           box-sizing: border-box; /* 包含边距和内边距的宽度计算 */
+       }
+       
+       #calendar div {
+           padding: 10px;
+           text-align: center;
+           cursor: pointer;
+           background-color: #fff;
+           border-radius: 5px;
+           transition: background-color 0.3s;
+           display: flex;
+           flex-direction: column;
+           justify-content: flex-start;
+           align-items: center;
+           word-wrap: break-word;
+           white-space: normal;
+           box-sizing: border-box;
+           min-height: 50px;
+           max-width: 100%; /* 单元格宽度不超出容器 */
+       }
+       
+       #calendar div .event {
+           font-size: 12px;
+           color: #555;
+           margin-top: 5px;
+           word-wrap: break-word;
+           text-overflow: ellipsis;
+           overflow: hidden;
+           display: block;
+           width: 100%;
+       }
+       
+       /* Media Query for Mobile Devices */
+       @media (max-width: 767px) {
+           #calendar-container {
+               padding: 10px;
+               min-width: 250px; /* 最小宽度调整 */
+               max-width: 95vw; /* 最大宽度为视口宽度的 95% */
+               max-height: 90vh; /* 最大高度为视口高度的 90% */
+           }
+       
+           #calendar {
+               grid-template-columns: repeat(7, 1fr); /* 保证手机端显示7列 */
+           }
+       
+           #calendar div {
+               padding: 8px;
+               min-height: 40px; /* 调整单元格的最小高度 */
+           }
+       
+           #calendar div .event {
+               font-size: 10px; /* 缩小字体以适应小屏幕 */
+           }
+       }
+       
+       @media (max-width: 500px) {
+           #calendar-container {
+               padding: 5px;
+               min-width: 220px; /* 更小的手机屏幕，进一步调整宽度 */
+               max-width: 90vw; /* 更小的最大宽度 */
+               max-height: 85vh; /* 更小的最大高度 */
+           }
+       
+           #calendar div {
+               padding: 6px;
+               min-height: 35px; /* 更小的单元格高度 */
+           }
+       
+           #calendar div .event {
+               font-size: 9px; /* 更小的字体 */
+           }
+       }
+		
+        #calendar div:hover {
+            background-color: #e1e1e1;
+        }
+
+        .day-title {
+    font-weight: bold;
+    color: #333;
+    background-color: #007bff; /* 你希望的背景色 */
+    padding: 10px 0;  /* 增加上下内边距，确保背景色显示 */
+    text-align: center; /* 保证文字水平居中 */
+    height: 50px;  /* 给星期行设置一个固定高度，确保背景可见 */
+}
+
+        .today {
+            border: 2px solid #007bff;
+            background-color: #d1e7ff;
+        }
+
+        #event-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #holiday-info {
+            margin-top: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* 导入和导出按钮样式 */
+        label[for="import-file"], #save-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #999999;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        label[for="import-file"]:hover, #save-btn:hover {
+            background-color: #0056b3;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* 弹窗样式 */
+        #import-modal {
+            display: block;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        #import-modal button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #999;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #import-modal button:hover {
+            background-color: #0056b3;
+        }
+		
+		/* 温馨提示样式 */
+		#warning-message {
+		    background-color: #fff;
+		    color: black;
+		    padding: 20px;
+		    border-radius: 10px;
+		    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		    width: 95vw;
+		    max-width: 100%; /* 最大宽度为95% */
+		    margin: 20px auto; /* 自动水平居中，顶部和底部都有间距 */
+		    box-sizing: border-box;
+		    text-align: left; /* 保证文本不居中 */
+			margin-top: 5px; /* 增加上边距，数值可以根据需要调整 */
+		}
+		
+		#warning-message ul {
+		    margin: 0;
+		    padding: 0;
+			list-style-type: none; /* 去掉默认的列表样式 (点) */
+		}
+		
+		#warning-message li {
+		    margin: 5px 0;
+			padding-left: 20px; /* 增加左间距 */
+		}
+		
+		/* 设置页脚的样式 */
+		        footer {
+		            font-size: 14px; /* 字体大小 */
+		            color: #888; /* 字体颜色 */
+		            margin-top: 10px; /* 顶部外边距 */
+		            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1); /* 给页脚添加阴影 */
+					text-align: center;
+		        }
+		
+    </style>
+</head>
+<body>
+	<!-- 父容器 -->
+	<div id="content-container">
+	    <!-- 温馨提示 -->
+	    <div id="warning-message">
+			<h1 style="text-align: center;">温馨提示</h1>
+	        <ul>
+	            <li>1、使用日历前请先导入日程数据；</li>
+	            <li>2、如是第一次使用可以关闭导入提示框；</li>
+	            <li>3、添加日程后，关闭网页前请先保存本次更改；</li>
+	            <li>4、保存数据会提示下载后缀为.json的文件，请允许下载并妥善保存，这是您更改后的日历数据，如丢失该数据，日历就是个空壳子；</li>
+	            <li>5、日历网页仅供学习交流，请勿用于商业用途；</li>
+				<li>6、删除日程请再次点击该日程，删除文字保存即可；</li>
+	        </ul>
+	    </div>
+
+    <div id="calendar-container">
+        <h1 style="text-align: center;">日程网页日历</h1>
+        <div id="calendar-header">
+            <div class="nav-buttons">
+                <button onclick="changeMonth(-1)">←</button>
+                <select id="year-select" onchange="generateCalendar()"></select>
+                <select id="month-select" onchange="generateCalendar()"></select>
+                <button onclick="changeMonth(1)">→</button>
+            </div>
+            <button onclick="goToToday()" style="padding: 5px 10px; font-size: 16px; cursor: pointer; margin-left: 10px;">今</button>
+        </div>
+        <div id="calendar"></div>
+        <div id="event-modal">
+            <h2>添加日程</h2>
+            <input type="text" id="event-title" placeholder="日程标题">
+            <button onclick="saveEvent()">保存</button>
+            <button onclick="closeModal()">关闭</button>
+        </div>
+		
+		<button onclick="openBatchModal()">批量添加日程</button> <!-- 新增批量添加按钮 -->
+		
+		<!-- 新增批量添加日程弹窗 -->
+		<div id="batch-modal" style="display:none;">
+		    <h2>批量添加日程</h2>
+		    <textarea id="batch-input" placeholder="冒号逗号要英文，例如：2024-12-01:日程1, 2024-12-02:日程2"></textarea>
+		    <button onclick="saveBatchEvent()">保存批量日程</button>
+		    <button onclick="closeBatchModal()">关闭</button>
+		</div>
+
+
+        <!-- 导入和导出按钮 -->
+        <div>
+            <button id="save-btn" onclick="exportData()">保存本次更改到本地</button>
+            <input type="file" id="import-file" accept=".json" onchange="importData(event)" />
+            <label for="import-file">导入本地数据</label>
+        </div>
+    </div>
+	<!-- 页脚，显示制作人信息 -->
+	    <footer>作者:Kevin鲁大师 / 仅供学习交流 勿用于商业 / 未经许可 盗用必究</footer>
+    <!-- 导入提示框 -->
+	
+    <div id="import-modal">
+        <h2 style="font-size: 18px;color: red;">使用日历前,请先导入本地后缀为json数据文件<br>如不需要或第一次使用，请关闭本弹窗</h2>
+        <label for="import-file">导入本地数据</label>
+		<button id="close-import-modal" onclick="closeImportModal()">关闭提示框</button>
+    </div>
+
+    <!-- 关闭提示框 -->
+    <div id="close-modal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); z-index: 100;">
+        <h2>亲，您的数据没有保存，请您先保存数据并下载到本地哦，下次使用日历需要导入数据才能使用</h2>
+        <button onclick="closeCloseModal()">关闭提示框</button>
+    </div>
+
+
+    <script>
+       let events = JSON.parse(localStorage.getItem('events')) || {};
+       let holidays = {
+           '2024-01-01': '元旦',
+           '2024-10-01': '国庆节'
+       };
+       
+       const daysOfWeek = ['一', '二', '三', '四', '五', '六', '日'];
+       let currentYear = new Date().getFullYear();
+       let currentMonth = new Date().getMonth();
+       let currentDay = new Date().getDate();
+       let currentDateString = `${currentYear}-${currentMonth + 1 < 10 ? '0' : ''}${currentMonth + 1}-${currentDay < 10 ? '0' : ''}${currentDay}`;
+       
+       const initializeSelectors = () => {
+           const monthSelect = document.getElementById('month-select');
+           const yearSelect = document.getElementById('year-select');
+           
+           for (let i = 0; i < 12; i++) {
+               const monthOption = document.createElement('option');
+               monthOption.value = i;
+               monthOption.textContent = `${i + 1}月`;
+               monthSelect.appendChild(monthOption);
+           }
+           monthSelect.value = currentMonth;
+       
+           for (let i = currentYear - 10; i <= currentYear + 10; i++) {
+               const yearOption = document.createElement('option');
+               yearOption.value = i;
+               yearOption.textContent = `${i}年`;
+               yearSelect.appendChild(yearOption);
+           }
+           yearSelect.value = currentYear;
+       };
+       
+       const generateCalendar = () => {
+           const monthSelect = document.getElementById('month-select');
+           const yearSelect = document.getElementById('year-select');
+           const selectedMonth = parseInt(monthSelect.value);
+           const selectedYear = parseInt(yearSelect.value);
+       
+           const calendarDiv = document.getElementById('calendar');
+           const firstDay = new Date(selectedYear, selectedMonth, 1).getDay();
+           const totalDays = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+       
+           calendarDiv.innerHTML = '';
+       
+           // 生成星期标题行
+           daysOfWeek.forEach(day => {
+               const dayTitle = document.createElement('div');
+               dayTitle.classList.add('day-title');
+               dayTitle.textContent = day;
+               calendarDiv.appendChild(dayTitle);
+           });
+       
+           // 补齐空白格子
+           const firstDayAdjusted = firstDay === 0 ? 6 : firstDay - 1;
+           for (let i = 0; i < firstDayAdjusted; i++) {
+               calendarDiv.innerHTML += '<div></div>';
+           }
+       
+           // 生成每一天  这里调整日程文字样式
+           for (let day = 1; day <= totalDays; day++) {
+               const dateString = `${selectedYear}-${selectedMonth + 1 < 10 ? '0' : ''}${selectedMonth + 1}-${day < 10 ? '0' : ''}${day}`;
+               const isHoliday = holidays[dateString] ? ` (${holidays[dateString]})` : '';
+               const event = events[dateString] ? `<div style="font-size: 12px; color: #555;">${events[dateString]}</div>` : '';
+               const dayCell = document.createElement('div');
+               dayCell.textContent = day + isHoliday;
+               dayCell.innerHTML += event;  // 将日程显示在日期下方
+       
+               if (dateString === currentDateString) {
+                   dayCell.classList.add('today');
+               }
+       
+               dayCell.onclick = () => openEventModal(dateString);
+               calendarDiv.appendChild(dayCell);
+           }
+       };
+       
+       const changeMonth = (direction) => {
+           const monthSelect = document.getElementById('month-select');
+           const yearSelect = document.getElementById('year-select');
+       
+           let newMonth = parseInt(monthSelect.value) + direction;
+           let newYear = parseInt(yearSelect.value);
+       
+           if (newMonth < 0) {
+               newMonth = 11;
+               newYear--;
+           } else if (newMonth > 11) {
+               newMonth = 0;
+               newYear++;
+           }
+       
+           monthSelect.value = newMonth;
+           yearSelect.value = newYear;
+       
+           generateCalendar();
+       };
+       
+       const openEventModal = (date) => {
+           const eventTitleInput = document.getElementById('event-title');
+           eventTitleInput.value = events[date] || '';
+           document.getElementById('event-modal').style.display = 'block';
+           currentDate = date;
+       };
+       
+       const saveEvent = () => {
+           const eventTitleInput = document.getElementById('event-title');
+           events[currentDate] = eventTitleInput.value;
+           localStorage.setItem('events', JSON.stringify(events));
+           closeModal();
+           generateCalendar();
+       };
+       
+       const closeModal = () => {
+           document.getElementById('event-modal').style.display = 'none';
+       };
+       
+       const goToToday = () => {
+           const monthSelect = document.getElementById('month-select');
+           const yearSelect = document.getElementById('year-select');
+           monthSelect.value = currentMonth;
+           yearSelect.value = currentYear;
+           generateCalendar();
+       };
+       
+       // 关闭导入提示框
+       const closeImportModal = () => {
+           document.getElementById('import-modal').style.display = 'none';
+       };
+       
+       // 导入数据
+       const importData = (event) => {
+           const file = event.target.files[0];
+           if (file && file.type === "application/json") {
+               const reader = new FileReader();
+               reader.onload = () => {
+                   try {
+                       const importedEvents = JSON.parse(reader.result);
+                       events = importedEvents;
+                       localStorage.setItem('events', JSON.stringify(events));
+                       document.getElementById('import-modal').style.display = 'none';  // 导入成功后关闭弹窗
+                       generateCalendar();
+                   } catch (e) {
+                       alert("导入数据失败，请检查文件格式。");
+                   }
+               };
+               reader.readAsText(file);
+           } else {
+               alert("请选择有效的 JSON 文件。");
+           }
+       };
+       
+       // 导出数据
+       const exportData = () => {
+           const blob = new Blob([JSON.stringify(events)], { type: 'application/json' });
+           const a = document.createElement('a');
+       
+           // 获取当前时间的年月日时分秒
+           const now = new Date();
+           const year = now.getFullYear();
+           const month = (now.getMonth() + 1).toString().padStart(2, '0'); // 月份是从0开始的，所以加1
+           const day = now.getDate().toString().padStart(2, '0');
+           const hours = now.getHours().toString().padStart(2, '0');
+           const minutes = now.getMinutes().toString().padStart(2, '0');
+           const seconds = now.getSeconds().toString().padStart(2, '0');
+       
+           // 构造文件名
+           const fileName = `日历数据-${year}${month}${day}-${hours}${minutes}${seconds}.json`;
+       
+           a.href = URL.createObjectURL(blob);
+           a.download = fileName;
+           a.click();
+       
+           // 数据已保存，更新标志
+               isDataSaved = true;  // 数据保存成功
+           };
+       
+       const initializeApp = () => {
+           initializeSelectors();
+           generateCalendar();
+       };
+       
+       window.onload = () => {
+           if (!localStorage.getItem('events') || Object.keys(JSON.parse(localStorage.getItem('events'))).length === 0) {
+               document.getElementById('import-modal').style.display = 'block';
+           } else {
+               document.getElementById('import-modal').style.display = 'none';
+           }
+           initializeApp();
+       };
+       
+       let isDataSaved = false;  // 标记数据是否已保存
+       let isPageClosing = false;  // 标记是否正在关闭页面
+       
+       window.onbeforeunload = (event) => {
+           // 只在数据没有保存且有日程的情况下显示提示框
+           if (!isDataSaved && Object.keys(events).length > 0 && !isPageClosing) {
+               const modal = document.getElementById('close-modal');
+               if (modal && modal.style.display !== 'block') {
+                   modal.style.display = 'block';  // 显示提示框
+               }
+       
+               // 提示用户是否保存数据
+               event.returnValue = "亲，您的数据没有保存，请您先保存数据并下载到本地哦，下次使用日历需要导入数据才能使用呢";
+               return "亲，您的数据没有保存，请您先保存数据并下载到本地哦，下次使用日历需要导入数据才能使用呢";
+           }
+       };
+       
+       // 关闭提示框
+       const closeCloseModal = () => {
+           document.getElementById('close-modal').style.display = 'none';
+           isPageClosing = true;  // 设置页面关闭标志
+       };
+	   
+	   
+	   // 打开批量添加日程弹窗
+	   const openBatchModal = () => {
+	       document.getElementById('batch-modal').style.display = 'block';
+	   };
+	   
+	   // 关闭批量添加日程弹窗
+	   const closeBatchModal = () => {
+	       document.getElementById('batch-modal').style.display = 'none';
+	   };
+	   
+	   // 保存批量日程
+	   const saveBatchEvent = () => {
+	       const batchInput = document.getElementById('batch-input').value;
+	       const batchData = batchInput.split(',').map(entry => {
+	           const [date, event] = entry.split(':').map(item => item.trim());
+	           if (date && event) {
+	               events[date] = event;
+	           }
+	       });
+	       localStorage.setItem('events', JSON.stringify(events));
+	       document.getElementById('batch-modal').style.display = 'none';
+	       generateCalendar();
+	   };
+
+
+
+    </script>
+</body>
+</html>
